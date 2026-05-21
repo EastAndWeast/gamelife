@@ -101,7 +101,19 @@ dist/assets/index-DUpvASrX.js   30.50 kB │ gzip: 11.53 kB
 
 ## 5. 结论
 
-系统经过紧急转义缺陷修复、CORS 同源双通道代理的升级以及代理 Fallback DNS 机制的精准修补，本地与线上部署的 API 跨域及代理稳定性均达到完美状态。
+系统经过紧急转义缺陷修复、CORS 同源双通道代理的升级以及代理 Fallback DNS 机制的精准修补，本地与线上部署 of API 跨域及代理稳定性均达到完美状态。
+
+---
+
+## 6. Cloudflare 线上部署配置说明 (2026-05-21)
+
+在部署时，用户需要填写 Cloudflare Pages 的构建配置表单。根据项目基于 Vite 开发且 API 代理通过根目录下 `/functions` 目录实现的特点，配置如下：
+- **框架预设 (Framework preset)**：选择 **`Vite`** （若无此预设，选 `无`）
+- **构建命令 (Build command)**：填写 **`npm run build`**
+- **构建输出目录 (Build output directory)**：填写 **`dist`**
+- **根目录 (Root directory)**：填写 **`/`** （即默认值，保持为空或 `/`）
+
+**代理自动生效说明**：Cloudflare Pages 平台会自动检测代码库根目录下的 `functions` 文件夹，并自动将其编译部署为 Pages Functions（基于 Cloudflare Workers 运行时）。因此，无需在 Cloudflare 平台额外配置任何反向代理，只需上述构建配置完成，线上跨域代理通道即可自动打通。
 
 
 
