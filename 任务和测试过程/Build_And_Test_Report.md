@@ -150,6 +150,12 @@ dist/assets/index-DUpvASrX.js   30.50 kB │ gzip: 11.53 kB
    - 包含 `src/main.js` 中修复的 API 配置保存后对当前时空节点选项重新渲染的微调逻辑（`renderOptionsForCurrentNode()`），确保玩家在重新配置大模型密钥后无需重刷即可开始决策。
 2. **远程同步**：
    - 本地所有更新资产（PWA 配置、新 Logo 图标、主代码逻辑等）均打包、暂存并成功通过 Git 完整推送至远程 GitHub 分支。云端 Cloudflare Pages 将自动重构，拉取最新的配置资产上线运行。
+3. **能爬中转站 API 稳定端点升级**：
+   - 将 `src/main.js` 中内置默认的“能爬中转站”API 基地址从 `https://api.nengpa.com/v1` 修改为更适合 MiniMax 等模型的中转端点 `https://api.nengpa.com/anthropic`。
+   - 编写 `migrateLegacyNengpaConfig()` 配置防失效迁移逻辑：如果检测到老用户本地已经缓存了旧的 `/v1` 接口，会自动后台无感帮其修正并保存为 `/anthropic` 新端点，保障老用户无缝过渡。
+4. **Service Worker 缓存控制 (PWA 图标及名称立刻生效)**：
+   - 修改 `public/sw.js` 中的缓存版本号 `CACHE_NAME` 为 `game-life-shell-v2`。这可以通知客户端浏览器重新拉取最新的静态资源（包括刚更改的手柄 Logo 以及 "人生模拟" 的配置文件），立刻更新系统级桌面图标和应用名缓存。
+
 
 
 

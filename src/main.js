@@ -34,7 +34,7 @@ let currentUtterance = null;
 // ==========================================================================
 const DEFAULT_AI_CONFIG = {
   preset: 'nengpa',
-  baseUrl: 'https://api.nengpa.com/v1',
+  baseUrl: 'https://api.nengpa.com/anthropic',
   apiKey: '',
   model: 'MiniMax-M2.7'
 };
@@ -116,11 +116,22 @@ function loadAiConfig() {
   if (saved) {
     try {
       aiConfig = { ...DEFAULT_AI_CONFIG, ...JSON.parse(saved) };
+      migrateLegacyNengpaConfig();
     } catch (e) {
       console.error('加载 AI 配置失败，恢复默认值');
     }
   }
   updateAiConfigForm();
+}
+
+function migrateLegacyNengpaConfig() {
+  const isNengpaPreset = aiConfig.preset === 'nengpa';
+  const isMiniMaxDefault = aiConfig.model === 'MiniMax-M2.7';
+  const isOldOpenAiBase = aiConfig.baseUrl === 'https://api.nengpa.com/v1';
+  if (isNengpaPreset && isMiniMaxDefault && isOldOpenAiBase) {
+    aiConfig.baseUrl = 'https://api.nengpa.com/anthropic';
+    localStorage.setItem('game_life_ai_config', JSON.stringify(aiConfig));
+  }
 }
 
 // 刷新 AI 配置弹窗中的表单值
@@ -905,7 +916,7 @@ function setupEventListeners() {
   DOM.aiPreset.onchange = (e) => {
     const val = e.target.value;
     if (val === 'nengpa') {
-      DOM.aiBaseUrl.value = 'https://api.nengpa.com/v1';
+      DOM.aiBaseUrl.value = 'https://api.nengpa.com/anthropic';
       DOM.aiModel.value = 'MiniMax-M2.7';
     } else if (val === 'deepseek') {
       DOM.aiBaseUrl.value = 'https://api.deepseek.com/v1';
