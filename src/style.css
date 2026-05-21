@@ -1,0 +1,1192 @@
+/* ==========================================================================
+   时光回溯沙盒：AI 平行人生 RPG 核心设计系统 (Vanilla CSS)
+   ========================================================================== */
+
+/* 1. 设计系统 Token 声明 */
+:root {
+  /* 怀旧复古色彩系统 */
+  --bg-parchment: #f6f3eb;       /* 米白色羊皮纸底色 */
+  --bg-parchment-dark: #ebe6d8;  /* 深色羊皮纸卡片底色 */
+  --color-ink: #2c2924;          /* 墨水黑 */
+  --color-ink-muted: #5e5950;    /* 铅灰字色 */
+  --color-green-retro: #274c35;  /* 回忆留白墨绿 */
+  --color-green-glow: #386f4f;   /* 墨绿发光 */
+  --color-orange-sunset: #e76f51;/* 黄昏余晖橘 */
+  --color-orange-glow: #f4a261;  /* 黄昏橘发光 */
+  --color-border: #dfd8c8;       /* 羊皮纸边缘卡其色 */
+  --color-danger: #c94a29;       /* 警告红 */
+  --color-danger-glow: #e06d53;  /* 警告红发光 */
+  
+  /* 玻璃拟物与投影阴影 */
+  --glass-bg: rgba(235, 230, 216, 0.65);
+  --glass-border: rgba(223, 216, 200, 0.8);
+  --box-shadow-retro: 0 8px 24px rgba(44, 41, 36, 0.08);
+  --box-shadow-inset: inset 0 2px 4px rgba(44, 41, 36, 0.04);
+  --border-radius-retro: 12px;
+  
+  /* 字体族定义 */
+  --font-family-serif: 'Noto Serif SC', 'Georgia', serif;
+  --font-family-sans: 'Outfit', 'Segoe UI', system-ui, sans-serif;
+}
+
+/* 2. 基础重置与滚动条优化 */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: #e5dfd3;
+  background-image: radial-gradient(var(--bg-parchment) 1px, transparent 0),
+                    radial-gradient(var(--bg-parchment) 1px, transparent 0);
+  background-size: 24px 24px;
+  background-position: 0 0, 12px 12px;
+  color: var(--color-ink);
+  font-family: var(--font-family-serif);
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-ink-muted);
+}
+
+/* 3. 游戏主布局容器 */
+#game-app {
+  width: 96vw;
+  height: 94vh;
+  max-width: 1400px;
+  background-color: var(--bg-parchment);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-retro);
+  box-shadow: 0 16px 48px rgba(44, 41, 36, 0.15);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 4. 顶栏 (Header) 样式 */
+.game-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--bg-parchment-dark);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 10;
+}
+
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hourglass-icon {
+  font-size: 28px;
+  animation: rotateHourglass 4s ease-in-out infinite;
+}
+
+.game-title {
+  font-family: var(--font-family-serif);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-green-retro);
+  letter-spacing: 1px;
+}
+
+.game-title small {
+  font-family: var(--font-family-sans);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--color-ink-muted);
+  margin-left: 8px;
+  background: rgba(44, 41, 36, 0.05);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+/* 5. 游戏主内容区域 (双栏划分) */
+.game-container {
+  flex: 1;
+  display: flex;
+  height: calc(100% - 70px);
+  overflow: hidden;
+}
+
+/* ==============================================
+   左栏：剧情与交互区域 (Width: 60%)
+   ============================================== */
+.story-panel {
+  width: 60%;
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-parchment);
+  position: relative;
+}
+
+/* 5.1 NPC 立绘舞台 */
+.npc-stage-wrapper {
+  padding: 20px;
+  background-image: linear-gradient(to bottom, rgba(235, 230, 216, 0.4) 0%, transparent 100%);
+  border-bottom: 1px solid rgba(223, 216, 200, 0.5);
+}
+
+.npc-stage {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
+  height: 180px;
+  gap: 10px;
+}
+
+.npc-slot {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  opacity: 0.5;
+  filter: grayscale(40%);
+  transform: translateY(10px);
+}
+
+.npc-slot.active {
+  opacity: 1;
+  filter: grayscale(0%);
+  transform: translateY(0);
+}
+
+/* NPC 动画与立绘容器 */
+.npc-sprite-container {
+  width: 100px;
+  height: 120px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+}
+
+.npc-sprite {
+  width: 100%;
+  height: 100%;
+  transition: transform 0.3s ease;
+}
+
+/* 呼吸动效与眨眼 */
+.npc-slot.active .npc-sprite {
+  animation: npcBreath 3s ease-in-out infinite alternate;
+}
+
+.npc-info {
+  margin-top: 10px;
+  text-align: center;
+  width: 100%;
+}
+
+.npc-name {
+  font-family: var(--font-family-serif);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.npc-name small {
+  font-size: 11px;
+  color: var(--color-ink-muted);
+  font-weight: 400;
+}
+
+.npc-meta {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.npc-badge {
+  font-family: var(--font-family-sans);
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--color-border);
+}
+
+.emotion-badge {
+  background-color: var(--bg-parchment-dark);
+}
+
+.emotion-happy { background-color: #e2f0d9; color: #385723; border-color: #c5e0b4; }
+.emotion-angry { background-color: #fce4d6; color: #c00000; border-color: #f8cbad; }
+.emotion-sad { background-color: #eceff1; color: #455a64; border-color: #cfd8dc; }
+.emotion-surprised { background-color: #fff2cc; color: #7f6000; border-color: #ffe599; }
+.emotion-neutral { background-color: #f2f2f2; color: #595959; border-color: #d9d9d9; }
+
+.npc-affinity {
+  font-family: var(--font-family-sans);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-orange-sunset);
+}
+
+/* NPC 占位立绘（精美几何样式/SVG） */
+.placeholder-mother, .placeholder-classmate, .placeholder-friend {
+  width: 90px;
+  height: 110px;
+  border-radius: 45% 45% 0 0;
+  background-size: cover;
+  background-position: center;
+  box-shadow: 0 4px 12px rgba(44, 41, 36, 0.1);
+  border: 2px solid var(--bg-parchment);
+}
+
+/* 5.2 剧情与对话文本展示盒 */
+.dialogue-box {
+  flex: 1;
+  padding: 24px 30px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.age-banner {
+  align-self: flex-start;
+  font-family: var(--font-family-sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-green-retro);
+  background-color: rgba(39, 76, 53, 0.08);
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-bottom: 16px;
+  letter-spacing: 1px;
+}
+
+.dialogue-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 10px;
+  font-size: 16px;
+  line-height: 1.8;
+  letter-spacing: 0.5px;
+  color: var(--color-ink);
+}
+
+.story-paragraph {
+  margin-bottom: 16px;
+  animation: fadeIn 0.4s ease;
+  white-space: pre-wrap;
+}
+
+.story-paragraph.npc-speech {
+  background-color: rgba(235, 230, 216, 0.4);
+  padding: 12px 18px;
+  border-radius: 8px;
+  border-left: 3px solid var(--color-green-retro);
+}
+
+.story-paragraph.npc-speech .speaker-name {
+  font-weight: 700;
+  color: var(--color-green-retro);
+  margin-right: 8px;
+  font-size: 14px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.loading-text::after {
+  content: '...';
+  animation: dots 1.5s infinite;
+}
+
+/* 5.3 玩家性格属性区 */
+.stats-bar {
+  padding: 12px 30px;
+  background-color: var(--bg-parchment-dark);
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.stat-item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stat-label {
+  font-family: var(--font-family-serif);
+  font-size: 13px;
+  font-weight: 700;
+  width: 50px;
+  color: var(--color-ink-muted);
+}
+
+.stat-track {
+  flex: 1;
+  height: 8px;
+  background-color: rgba(44, 41, 36, 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: var(--box-shadow-inset);
+}
+
+.stat-fill {
+  height: 100%;
+  background-image: linear-gradient(to right, var(--color-orange-glow), var(--color-orange-sunset));
+  border-radius: 4px;
+  transition: width 0.8s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.stat-val {
+  font-family: var(--font-family-sans);
+  font-size: 13px;
+  font-weight: 600;
+  width: 24px;
+  text-align: right;
+  color: var(--color-ink);
+}
+
+/* 5.4 控制交互区：选项按钮与文本框 */
+.interaction-control {
+  padding: 20px 30px 24px;
+  background-color: var(--bg-parchment);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.options-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.option-btn {
+  width: 100%;
+  padding: 12px 18px;
+  font-family: var(--font-family-serif);
+  font-size: 15px;
+  color: var(--color-ink);
+  background-color: var(--bg-parchment-dark);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 4px rgba(44, 41, 36, 0.02);
+  line-height: 1.5;
+}
+
+.option-btn:hover:not(:disabled) {
+  background-color: var(--color-green-retro);
+  color: var(--bg-parchment);
+  border-color: var(--color-green-retro);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(39, 76, 53, 0.15);
+}
+
+.option-btn:disabled, .option-btn.locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.custom-input-area {
+  display: flex;
+  gap: 12px;
+}
+
+#input-custom-action {
+  flex: 1;
+  padding: 12px 16px;
+  font-family: var(--font-family-serif);
+  font-size: 14px;
+  background-color: var(--bg-parchment-dark);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-ink);
+  transition: all 0.3s ease;
+}
+
+#input-custom-action:focus {
+  outline: none;
+  border-color: var(--color-green-glow);
+  background-color: var(--bg-parchment);
+  box-shadow: 0 0 0 3px rgba(39, 76, 53, 0.1);
+}
+
+#input-custom-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.submit-btn {
+  padding: 12px 24px;
+  font-family: var(--font-family-sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--bg-parchment);
+  background-color: var(--color-orange-sunset);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 12px rgba(231, 111, 81, 0.2);
+}
+
+.submit-btn:hover:not(:disabled) {
+  background-color: #d85c3e;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(231, 111, 81, 0.3);
+}
+
+.submit-btn:disabled {
+  background-color: var(--color-border);
+  color: var(--color-ink-muted);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+
+/* ==============================================
+   右栏：时空回溯分支树画布区 (Width: 40%)
+   ============================================== */
+.tree-panel {
+  width: 40%;
+  background-color: var(--bg-parchment-dark);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.panel-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: rgba(223, 216, 200, 0.3);
+}
+
+.panel-title {
+  font-family: var(--font-family-serif);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-green-retro);
+}
+
+.panel-title small {
+  font-family: var(--font-family-sans);
+  font-size: 11px;
+  color: var(--color-ink-muted);
+  font-weight: 400;
+}
+
+.canvas-container {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  cursor: grab;
+}
+
+.canvas-container:active {
+  cursor: grabbing;
+}
+
+#tree-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* 缩放按钮 */
+.tree-zoom-controls {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 5;
+}
+
+.zoom-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--bg-parchment);
+  border: 1px solid var(--color-border);
+  color: var(--color-ink);
+  font-family: var(--font-family-sans);
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 8px rgba(44, 41, 36, 0.06);
+  transition: all 0.2s ease;
+}
+
+.zoom-btn:hover {
+  background-color: var(--color-green-retro);
+  color: var(--bg-parchment);
+  border-color: var(--color-green-retro);
+}
+
+
+/* ==============================================
+   6. 按钮与交互浮层组件 (Modals)
+   ============================================== */
+.retro-btn, .retro-btn-primary {
+  padding: 8px 16px;
+  font-family: var(--font-family-sans);
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.retro-btn {
+  background-color: var(--bg-parchment);
+  border: 1px solid var(--color-border);
+  color: var(--color-ink);
+  box-shadow: 0 2px 4px rgba(44, 41, 36, 0.02);
+}
+
+.retro-btn:hover {
+  background-color: rgba(44, 41, 36, 0.05);
+}
+
+.retro-btn-primary {
+  background-color: var(--color-green-retro);
+  border: 1px solid var(--color-green-retro);
+  color: var(--bg-parchment);
+  box-shadow: 0 2px 6px rgba(39, 76, 53, 0.15);
+}
+
+.retro-btn-primary:hover {
+  background-color: var(--color-green-glow);
+  border-color: var(--color-green-glow);
+  box-shadow: 0 4px 12px rgba(39, 76, 53, 0.25);
+}
+
+.danger-btn-sm {
+  padding: 4px 10px;
+  font-family: var(--font-family-sans);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-danger);
+  background-color: transparent;
+  border: 1px solid var(--color-danger);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.danger-btn-sm:hover {
+  color: var(--bg-parchment);
+  background-color: var(--color-danger);
+}
+
+/* 模态框弹窗系统 */
+.modal-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(44, 41, 36, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  transition: opacity 0.3s ease;
+  opacity: 1;
+}
+
+.modal-backdrop.hidden {
+  display: none !important;
+  opacity: 0;
+}
+
+.retro-modal {
+  width: 90%;
+  max-width: 500px;
+  background-color: var(--bg-parchment);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-retro);
+  box-shadow: 0 24px 64px rgba(44, 41, 36, 0.2);
+  display: flex;
+  flex-direction: column;
+  animation: modalScaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.modal-title {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--color-border);
+  font-family: var(--font-family-serif);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-green-retro);
+}
+
+.modal-title.danger {
+  color: var(--color-danger);
+}
+
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  max-height: 60vh;
+}
+
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--color-border);
+  background-color: var(--bg-parchment-dark);
+  border-radius: 0 0 var(--border-radius-retro) var(--border-radius-retro);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* 表单组件 */
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-family: var(--font-family-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-ink-muted);
+  margin-bottom: 6px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px 14px;
+  font-family: var(--font-family-sans);
+  font-size: 14px;
+  background-color: var(--bg-parchment-dark);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  color: var(--color-ink);
+  transition: all 0.25s ease;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--color-green-glow);
+  background-color: var(--bg-parchment);
+}
+
+.security-tip {
+  font-family: var(--font-family-sans);
+  font-size: 11px;
+  color: var(--color-ink-muted);
+  line-height: 1.5;
+  background-color: rgba(39, 76, 53, 0.05);
+  padding: 10px 14px;
+  border-radius: 6px;
+  border-left: 2px solid var(--color-green-retro);
+  margin-top: 14px;
+}
+
+/* 存档管理网格 */
+.save-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.save-card {
+  border: 1px dashed var(--color-border);
+  background-color: var(--bg-parchment-dark);
+  padding: 16px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.save-card h4 {
+  font-family: var(--font-family-serif);
+  font-size: 14px;
+  color: var(--color-ink);
+}
+
+.save-card p {
+  font-family: var(--font-family-sans);
+  font-size: 11px;
+  color: var(--color-ink-muted);
+  line-height: 1.5;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.save-status-info {
+  background-color: var(--bg-parchment-dark);
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-family: var(--font-family-sans);
+  font-size: 13px;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* 回溯信息框 */
+.rewind-node-info {
+  background-color: var(--bg-parchment-dark);
+  padding: 16px;
+  border-radius: 8px;
+  margin-top: 14px;
+  font-family: var(--font-family-sans);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.warning-text {
+  color: var(--color-danger);
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+.danger-btn {
+  background-color: var(--color-danger);
+  border-color: var(--color-danger);
+}
+
+.danger-btn:hover {
+  background-color: #a83a1d;
+  border-color: #a83a1d;
+  box-shadow: 0 4px 12px rgba(201, 74, 41, 0.25);
+}
+
+
+/* ==============================================
+   7. 动画定义 (Animations)
+   ============================================== */
+
+/* 沙漏翻转动画 */
+@keyframes rotateHourglass {
+  0% { transform: rotate(0deg); }
+  45% { transform: rotate(0deg); }
+  55% { transform: rotate(180deg); }
+  100% { transform: rotate(180deg); }
+}
+
+/* NPC 呼吸微动 */
+@keyframes npcBreath {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-5px); }
+}
+
+/* 文字闪烁 */
+@keyframes dots {
+  0% { content: '.'; }
+  33% { content: '..'; }
+  66% { content: '...'; }
+}
+
+/* 渐入 */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 弹窗打开动效 */
+@keyframes modalScaleUp {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* 7.1 时空回溯全屏动画特效 */
+#time-travel-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  background-color: transparent;
+  pointer-events: none;
+  transition: background-color 0.5s ease;
+}
+
+#time-travel-overlay.active {
+  animation: timeTravelVortex 1.8s cubic-bezier(0.77, 0, 0.175, 1) forwards;
+}
+
+@keyframes timeTravelVortex {
+  0% {
+    background-color: rgba(44, 41, 36, 0);
+    backdrop-filter: blur(0px) rotate(0deg) scale(1) invert(0%);
+  }
+  30% {
+    background-color: rgba(39, 76, 53, 0.25);
+    backdrop-filter: blur(6px) rotate(45deg) scale(1.1) invert(10%);
+  }
+  50% {
+    background-color: rgba(231, 111, 81, 0.4);
+    backdrop-filter: blur(16px) rotate(-180deg) scale(0.8) invert(100%) grayscale(80%);
+  }
+  75% {
+    background-color: rgba(44, 41, 36, 0.65);
+    backdrop-filter: blur(10px) rotate(90deg) scale(1.2) invert(30%);
+  }
+  100% {
+    background-color: rgba(44, 41, 36, 0);
+    backdrop-filter: blur(0px) rotate(0deg) scale(1) invert(0%);
+  }
+}
+
+/* ==============================================
+   8. 移动端与窄屏适配
+   ============================================== */
+@media (max-width: 900px) {
+  body {
+    height: auto;
+    min-height: 100dvh;
+    overflow: auto;
+    align-items: flex-start;
+  }
+
+  #game-app {
+    width: 100%;
+    min-height: 100dvh;
+    height: auto;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    overflow: visible;
+  }
+
+  .game-header {
+    position: sticky;
+    top: 0;
+    padding: 12px 14px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .logo-area {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .hourglass-icon {
+    font-size: 24px;
+  }
+
+  .game-title {
+    font-size: 18px;
+    line-height: 1.2;
+  }
+
+  .game-title small {
+    display: block;
+    width: fit-content;
+    margin: 4px 0 0;
+    font-size: 11px;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .header-actions button {
+    flex: 1;
+    min-height: 42px;
+  }
+
+  .game-container {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    flex-direction: column;
+  }
+
+  .story-panel,
+  .tree-panel {
+    width: 100%;
+  }
+
+  .story-panel {
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .npc-stage-wrapper {
+    padding: 12px 10px 10px;
+  }
+
+  .npc-stage {
+    height: 130px;
+    gap: 4px;
+  }
+
+  .npc-sprite-container {
+    width: 72px;
+    height: 88px;
+  }
+
+  .npc-info {
+    margin-top: 6px;
+  }
+
+  .npc-name {
+    font-size: 12px;
+  }
+
+  .npc-name small {
+    display: block;
+    font-size: 10px;
+  }
+
+  .npc-meta {
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .npc-badge,
+  .npc-affinity {
+    font-size: 10px;
+  }
+
+  .dialogue-box {
+    min-height: 42vh;
+    padding: 18px 16px;
+  }
+
+  .dialogue-scroll-area {
+    max-height: 48vh;
+    font-size: 15px;
+    line-height: 1.75;
+    padding-right: 6px;
+  }
+
+  .stats-bar {
+    padding: 12px 16px;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .stat-label {
+    width: 64px;
+  }
+
+  .interaction-control {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .option-btn {
+    min-height: 48px;
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+
+  .custom-input-area {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  #input-custom-action,
+  .submit-btn {
+    width: 100%;
+    min-height: 46px;
+  }
+
+  .tree-panel {
+    min-height: 420px;
+  }
+
+  .panel-header {
+    padding: 12px 14px;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .panel-title {
+    font-size: 14px;
+    line-height: 1.35;
+  }
+
+  .panel-title small {
+    display: block;
+    margin-top: 2px;
+  }
+
+  .danger-btn-sm {
+    min-height: 36px;
+    white-space: nowrap;
+  }
+
+  .canvas-container {
+    min-height: 360px;
+  }
+
+  .tree-zoom-controls {
+    right: 14px;
+    bottom: 14px;
+  }
+
+  .modal-backdrop {
+    position: fixed;
+    padding: 16px;
+    align-items: flex-start;
+    overflow-y: auto;
+  }
+
+  .retro-modal {
+    width: 100%;
+    max-width: 520px;
+    margin: auto 0;
+    max-height: calc(100dvh - 32px);
+  }
+
+  .modal-title {
+    padding: 16px;
+    font-size: 17px;
+  }
+
+  .modal-body {
+    padding: 16px;
+    max-height: calc(100dvh - 170px);
+  }
+
+  .modal-footer {
+    padding: 12px 16px;
+    flex-wrap: wrap;
+  }
+
+  .modal-footer button {
+    flex: 1;
+    min-width: 120px;
+    min-height: 42px;
+  }
+
+  .save-actions-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .save-status-info {
+    display: block;
+  }
+
+  .save-status-info p + p {
+    margin-top: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .game-header {
+    padding: 10px;
+  }
+
+  .game-title {
+    font-size: 16px;
+  }
+
+  .header-actions {
+    gap: 8px;
+  }
+
+  .retro-btn,
+  .retro-btn-primary {
+    padding-left: 10px;
+    padding-right: 10px;
+    font-size: 12px;
+  }
+
+  .npc-stage {
+    height: 112px;
+  }
+
+  .npc-sprite-container {
+    width: 58px;
+    height: 72px;
+  }
+
+  .npc-name {
+    font-size: 11px;
+  }
+
+  .npc-meta {
+    display: none;
+  }
+
+  .dialogue-box {
+    min-height: 46vh;
+    padding: 16px 12px;
+  }
+
+  .dialogue-scroll-area {
+    max-height: 52vh;
+    font-size: 14px;
+  }
+
+  .stats-bar,
+  .interaction-control {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .panel-header {
+    flex-direction: column;
+  }
+
+  .danger-btn-sm {
+    width: 100%;
+  }
+
+  .tree-panel {
+    min-height: 380px;
+  }
+
+  .canvas-container {
+    min-height: 320px;
+  }
+}
