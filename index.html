@@ -200,6 +200,7 @@
           <div class="form-group">
             <label for="ai-preset">快捷渠道模版</label>
             <select id="ai-preset" class="form-control">
+              <option value="free-gemini">免配置体验通道 (Gemini)</option>
               <option value="nengpa">能爬中转站 (api.nengpa.com)</option>
               <option value="deepseek">DeepSeek 官方 API</option>
               <option value="openai">OpenAI 官方 API</option>
@@ -218,7 +219,7 @@
             <label for="ai-model">推演模型 (Model ID)</label>
             <input type="text" id="ai-model" class="form-control" placeholder="MiniMax-M2.7">
           </div>
-          <p class="security-tip">🔒 <strong>隐私安全声明</strong>：您的 API 密钥存储于您本机的浏览器本地缓存（LocalStorage）中，所有的推演请求由您的浏览器通过 HTTPS 直接发往对应 API，不经过任何第三方服务器转接，保障密钥的绝对隐私与自主权。</p>
+          <p class="security-tip">🔒 <strong>隐私安全声明</strong>：免配置体验通道会通过站点后端调用 Gemini，不需要用户填写 Key。若您选择自定义渠道，API 密钥仅存储在本机浏览器 LocalStorage 中。</p>
         </div>
         <div class="modal-footer">
           <button id="btn-close-ai" class="retro-btn">取消</button>

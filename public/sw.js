@@ -1,4 +1,4 @@
-const CACHE_NAME = 'game-life-shell-v4';
+const CACHE_NAME = 'game-life-shell-v5';
 const SHELL_URLS = [
   '/',
   '/manifest.webmanifest',

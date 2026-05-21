@@ -33,10 +33,10 @@ let currentUtterance = null;
 // 2. AI 多渠道配置状态 (AI Config State)
 // ==========================================================================
 const DEFAULT_AI_CONFIG = {
-  preset: 'nengpa',
-  baseUrl: 'https://api.nengpa.com/anthropic',
+  preset: 'free-gemini',
+  baseUrl: '',
   apiKey: '',
-  model: 'MiniMax-M2.7'
+  model: 'gemini-2.5-flash-lite'
 };
 
 let aiConfig = { ...DEFAULT_AI_CONFIG };
@@ -44,7 +44,8 @@ let aiConfig = { ...DEFAULT_AI_CONFIG };
 const STORAGE_KEYS = {
   save: 'game_life_save',
   saveBackup: 'game_life_save_backup',
-  aiConfig: 'game_life_ai_config'
+  aiConfig: 'game_life_ai_config',
+  anonymousUserId: 'game_life_anonymous_user_id'
 };
 const SAVE_SCHEMA_VERSION = 1;
 
@@ -147,6 +148,7 @@ function updateAiConfigForm() {
   DOM.aiBaseUrl.value = aiConfig.baseUrl;
   DOM.aiApiKey.value = aiConfig.apiKey;
   DOM.aiModel.value = aiConfig.model;
+  updateAiConfigFieldVisibility();
 }
 
 // 保存 AI 配置
@@ -171,8 +173,9 @@ function saveAiConfigFromForm() {
 
 // 检查 API 配置，判断是否启用按钮锁定
 function checkApiConfiguration() {
+  const usesBuiltInFreeChannel = aiConfig.preset === 'free-gemini';
   const hasKey = !!aiConfig.apiKey;
-  if (!hasKey) {
+  if (!usesBuiltInFreeChannel && !hasKey) {
     DOM.optionsList.innerHTML = `<button class="option-btn locked" id="btn-unlock-api">⚠️ 请先点击右上角“⚙️ AI配置”填入 API Key 激活人生</button>`;
     const unlockBtn = document.getElementById('btn-unlock-api');
     if (unlockBtn) {
@@ -185,7 +188,7 @@ function checkApiConfiguration() {
     DOM.inputCustomAction.disabled = false;
     DOM.btnSubmitAction.disabled = false;
   }
-  return hasKey;
+  return usesBuiltInFreeChannel || hasKey;
 }
 
 // 自动存档至 LocalStorage
@@ -659,6 +662,10 @@ ${currentNode.storyText}
 
 // 兼容各厂商标准协议的 API 请求发送端 (通过同源代理解决跨域CORS拦截与网络握手阻隔)
 async function callLlmEngine(promptText) {
+  if (aiConfig.preset === 'free-gemini') {
+    return callFreeGeminiEngine(promptText);
+  }
+
   const normalizedBaseUrl = normalizeApiBaseUrl(aiConfig.baseUrl);
   const useAnthropic = isAnthropicBaseUrl(normalizedBaseUrl);
 
@@ -694,15 +701,7 @@ async function callLlmEngine(promptText) {
       throw new Error(`API 返回格式异常：${serverMessage}`);
     }
     
-    // 提取 JSON 并清理 markdown 标记
-    let cleanJsonStr = rawContent;
-    if (cleanJsonStr.startsWith('```json')) {
-      cleanJsonStr = cleanJsonStr.replace(/^```json/, '').replace(/```$/, '');
-    } else if (cleanJsonStr.startsWith('```')) {
-      cleanJsonStr = cleanJsonStr.replace(/^```/, '').replace(/```$/, '');
-    }
-
-    return JSON.parse(cleanJsonStr.trim());
+    return JSON.parse(cleanJsonFence(rawContent));
   } catch (err) {
     clearTimeout(timeoutId);
     if (err.name === 'AbortError') {
@@ -710,6 +709,67 @@ async function callLlmEngine(promptText) {
     }
     throw err;
   }
+}
+
+async function callFreeGeminiEngine(promptText) {
+  const controller = new AbortController();
+  const timeoutMs = 90000;
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch('/api-game', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        provider: 'gemini',
+        model: aiConfig.model || 'gemini-2.5-flash-lite',
+        systemPrompt: SYSTEM_PROMPT,
+        promptText,
+        anonymousUserId: getAnonymousUserId()
+      }),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorText = await readApiErrorText(response);
+      throw new Error(`免费体验通道异常 (${response.status}): ${errorText}`);
+    }
+
+    const data = await response.json();
+    const rawContent = data?.content?.trim();
+    if (!rawContent) {
+      throw new Error(`免费体验通道返回格式异常：${JSON.stringify(data).slice(0, 500)}`);
+    }
+
+    return JSON.parse(cleanJsonFence(rawContent));
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      throw new Error(`免费体验通道超时 ${Math.round(timeoutMs / 1000)} 秒无响应，可稍后重试或在 AI 配置中填写自己的 API。`);
+    }
+    throw err;
+  }
+}
+
+function getAnonymousUserId() {
+  let id = localStorage.getItem(STORAGE_KEYS.anonymousUserId);
+  if (!id) {
+    id = crypto.randomUUID ? crypto.randomUUID() : `anon_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    localStorage.setItem(STORAGE_KEYS.anonymousUserId, id);
+  }
+  return id;
+}
+
+function cleanJsonFence(rawContent) {
+  let cleanJsonStr = rawContent.trim();
+  if (cleanJsonStr.startsWith('```json')) {
+    cleanJsonStr = cleanJsonStr.replace(/^```json/, '').replace(/```$/, '');
+  } else if (cleanJsonStr.startsWith('```')) {
+    cleanJsonStr = cleanJsonStr.replace(/^```/, '').replace(/```$/, '');
+  }
+  return cleanJsonStr.trim();
 }
 
 function buildLlmRequestHeaders(baseUrl, useAnthropic) {
@@ -981,7 +1041,11 @@ function setupEventListeners() {
   // 适配能爬中转站模版自动补全
   DOM.aiPreset.onchange = (e) => {
     const val = e.target.value;
-    if (val === 'nengpa') {
+    if (val === 'free-gemini') {
+      DOM.aiBaseUrl.value = '';
+      DOM.aiApiKey.value = '';
+      DOM.aiModel.value = 'gemini-2.5-flash-lite';
+    } else if (val === 'nengpa') {
       DOM.aiBaseUrl.value = 'https://api.nengpa.com/anthropic';
       DOM.aiModel.value = 'MiniMax-M2.7';
     } else if (val === 'deepseek') {
@@ -991,7 +1055,16 @@ function setupEventListeners() {
       DOM.aiBaseUrl.value = 'https://api.openai.com/v1';
       DOM.aiModel.value = 'gpt-4o-mini';
     }
+    updateAiConfigFieldVisibility();
   };
+}
+
+function updateAiConfigFieldVisibility() {
+  const isFreeMode = DOM.aiPreset.value === 'free-gemini';
+  [DOM.aiBaseUrl, DOM.aiApiKey].forEach(input => {
+    const group = input.closest('.form-group');
+    if (group) group.classList.toggle('hidden', isFreeMode);
+  });
 }
 
 // 页面加载启动点

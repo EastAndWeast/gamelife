@@ -32,5 +32,9 @@
   - [x] 7.1 新建 `vite.config.js`，添加本地开发 `/api-proxy` 动态转发配置
   - [x] 7.2 新建 `functions/api-proxy/[[path]].js`，为 Cloudflare 部署配置动态代理函数
   - [x] 7.3 在 `src/main.js` 中启用 `/api-proxy` 代理转发，彻底消除浏览器的跨域拦截与超时问题
-
-
+- [x] **8. 免配置体验通道 (Gemini) 功能同步与 GitHub 代码提交**
+  - [x] 8.1 验证本地构建 `npm run build`，确保无编译警告或错误
+  - [x] 8.2 检查本地 Git 状态，确认包含免配置体验通道的前后端代码 (api-game.js, main.js, css, html等)
+  - [x] 8.3 将本次修改进行本地 Git 暂存 (git add) 并提交 (git commit)
+  - [x] 8.4 推送代码至 GitHub 远程仓库 (git push origin main)
+  - [x] 8.5 记录本次构建与测试结果到 `Build_And_Test_Report.md` 并更新 `AI沟通记录`

@@ -785,6 +785,10 @@ body {
   margin-bottom: 16px;
 }
 
+.form-group.hidden {
+  display: none;
+}
+
 .form-group label {
   display: block;
   font-family: var(--font-family-sans);

@@ -57,3 +57,5 @@ API的key应该没有上传吧
 帮我把代码上传到github
 
 请把代码上传到github
+
+请帮我把代码提交到github

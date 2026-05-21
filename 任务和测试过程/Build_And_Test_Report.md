@@ -171,3 +171,25 @@ dist/assets/index-DUpvASrX.js   30.50 kB │ gzip: 11.53 kB
      * 专属推演旋转沙漏（`loadingPulse`）伴随四周呼吸扩散光圈阴影。
      * 流光双色渐变进度条（`loadingBar`）表示后台决策与时空链路接通中，提供平缓的等待心理预期。
      * 对移动端、折叠屏自适应进行了布局和字号的媒体查询优化。
+
+---
+
+## 11. 免配置体验通道 (Gemini) 功能构建与 GitHub 提交同步记录 (2026-05-21)
+
+本阶段在系统层面新增了面向广大用户的免配置体验功能，大大降低了玩家体验 AI 剧情推演的门槛：
+1. **免配置后端代理 (api-game.js)**：
+   - 在 `functions/api-game.js` 中利用 Cloudflare Pages Functions 实现了与 Gemini 官方 API (gemini-2.5-flash-lite) 对接的后端边缘函数代理。
+   - 提取请求中的 `systemPrompt` 与 `promptText`，使用服务端安全保存的环境变量 `GEMINI_API_KEY` 发起安全请求，彻底杜绝了前端 API 密钥暴露的隐患。
+2. **前端免配置通道对接 (main.js / index.html / style.css)**：
+   - 在 API 配置弹窗中为玩家提供“免配置体验通道 (Gemini)”预设。
+   - 当玩家选择该通道时，API Key 输入框和接口基地址输入框会被自动折叠隐藏（利用新增的 `.form-group.hidden` CSS 规则），实现极简交互。
+   - 逻辑上，前端检测到该模式后，将剧情决策和 NPC 对话请求直接发往同源接口 `/api-game`，并在后台边缘 Worker 执行，无需玩家提供自己的 Key。
+   - 自动生成 `anonymousUserId`，辅助服务端识别匿名设备请求，提升调用的可控度。
+3. **Service Worker 缓存刷新控制 (sw.js)**：
+   - 缓存版本升级为 `game-life-shell-v5`，使得浏览器能够自动识别并清除过往的旧静态脚本缓存，保证前端最新的免配置通道 UI 及控制逻辑即时对用户生效。
+4. **编译与构建验证**：
+   - 本地重新运行 `npm run build`，零 warning、零报错通过 Vite 构建。
+   - 生成产物：`dist/index.html` (14.74 kB)、`dist/assets/index-Dn0zgUz1.css` (19.78 kB) 与 `dist/assets/index-CA8d9et0.js` (34.87 kB)。构建性能极佳。
+5. **安全与云端部署提醒**：
+   - 前端代码不存储任何私有 API Key。
+   - 提醒用户在部署上线后，必须在 Cloudflare Pages 项目的“设置 -> 环境变量”配置页面中增加名为 **`GEMINI_API_KEY`** 的变量值，否则免配置通道将返回 500 错误。
