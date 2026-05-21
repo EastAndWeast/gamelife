@@ -156,9 +156,18 @@ dist/assets/index-DUpvASrX.js   30.50 kB │ gzip: 11.53 kB
 4. **Service Worker 缓存控制 (PWA 图标及名称立刻生效)**：
    - 修改 `public/sw.js` 中的缓存版本号 `CACHE_NAME` 为 `game-life-shell-v2`。这可以通知客户端浏览器重新拉取最新的静态资源（包括刚更改的手柄 Logo 以及 "人生模拟" 的配置文件），立刻更新系统级桌面图标和应用名缓存。
 
+---
 
+## 10. 双轨备份存档与 AI 高级加载卡片重构记录 (2026-05-21)
 
-
-
-
-
+本阶段针对游玩时的“存档安全”与“推演等待视觉”进行了深度架构优化：
+1. **自动双轨备份存档 (Save Disaster Recovery)**：
+   - **机制**：在 `src/main.js` 中新增了 `preserveCurrentSaveAsBackup()`。在开启新游戏、导入外部 JSON 存档或每一次做出决策导致 `autoSaveGame()` 触发时，旧存档会自动移交暂存至 `saveBackup`。
+   - **防灾恢复**：当遇到不可预知的解析崩溃，游戏主加载 `tryLoadGame()` 会立刻激活捕获并滑移读取备份存档恢复，避免了用户长时间游玩的进度因网络或程序异常一夜清零。通过 `isValidSaveData` 精准阻断不完整脏数据的写入。
+2. **AI 推演加载卡片重构 (AI Loading UI/UX Rebuild)**：
+   - **效果**：舍弃了过往生硬的禁用按钮文本提示，重构为高度动态美观的 `.ai-loading-card`。
+   - **视觉动效**：
+     * 卡片背景加入羊皮纸质感与绿橘流光倾斜扫描动画（`loadingSheen` 呼吸扫光）。
+     * 专属推演旋转沙漏（`loadingPulse`）伴随四周呼吸扩散光圈阴影。
+     * 流光双色渐变进度条（`loadingBar`）表示后台决策与时空链路接通中，提供平缓的等待心理预期。
+     * 对移动端、折叠屏自适应进行了布局和字号的媒体查询优化。

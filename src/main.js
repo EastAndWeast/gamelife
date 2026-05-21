@@ -41,6 +41,13 @@ const DEFAULT_AI_CONFIG = {
 
 let aiConfig = { ...DEFAULT_AI_CONFIG };
 
+const STORAGE_KEYS = {
+  save: 'game_life_save',
+  saveBackup: 'game_life_save_backup',
+  aiConfig: 'game_life_ai_config'
+};
+const SAVE_SCHEMA_VERSION = 1;
+
 // ==========================================================================
 // 3. UI 元素缓存
 // ==========================================================================
@@ -112,7 +119,7 @@ const DOM = {
 
 // 加载 AI 配置
 function loadAiConfig() {
-  const saved = localStorage.getItem('game_life_ai_config');
+  const saved = localStorage.getItem(STORAGE_KEYS.aiConfig);
   if (saved) {
     try {
       aiConfig = { ...DEFAULT_AI_CONFIG, ...JSON.parse(saved) };
@@ -130,7 +137,7 @@ function migrateLegacyNengpaConfig() {
   const isOldOpenAiBase = aiConfig.baseUrl === 'https://api.nengpa.com/v1';
   if (isNengpaPreset && isMiniMaxDefault && isOldOpenAiBase) {
     aiConfig.baseUrl = 'https://api.nengpa.com/anthropic';
-    localStorage.setItem('game_life_ai_config', JSON.stringify(aiConfig));
+    localStorage.setItem(STORAGE_KEYS.aiConfig, JSON.stringify(aiConfig));
   }
 }
 
@@ -149,7 +156,7 @@ function saveAiConfigFromForm() {
   aiConfig.apiKey = DOM.aiApiKey.value.trim();
   aiConfig.model = DOM.aiModel.value.trim();
 
-  localStorage.setItem('game_life_ai_config', JSON.stringify(aiConfig));
+  localStorage.setItem(STORAGE_KEYS.aiConfig, JSON.stringify(aiConfig));
   DOM.modalAiConfig.classList.add('hidden');
   
   // 激活按钮
@@ -183,14 +190,26 @@ function checkApiConfiguration() {
 
 // 自动存档至 LocalStorage
 function autoSaveGame() {
+  if (!isValidSaveData(gameData)) {
+    console.warn('存档被拒绝：当前 gameData 结构不完整，已保留用户旧存档。');
+    return;
+  }
+
+  const previousSave = localStorage.getItem(STORAGE_KEYS.save);
+  if (previousSave) {
+    localStorage.setItem(STORAGE_KEYS.saveBackup, previousSave);
+  }
+
   const saveData = {
+    schemaVersion: SAVE_SCHEMA_VERSION,
+    updatedAt: new Date().toISOString(),
     nodes: gameData.nodes,
     rootId: gameData.rootId,
     currentNodeId: gameData.currentNodeId,
     playerStats: gameData.playerStats,
     npcs: gameData.npcs
   };
-  localStorage.setItem('game_life_save', JSON.stringify(saveData));
+  localStorage.setItem(STORAGE_KEYS.save, JSON.stringify(saveData));
   
   // 更新存档中心的数据统计
   if (DOM.saveNodeCount) {
@@ -200,23 +219,53 @@ function autoSaveGame() {
 
 // 从 LocalStorage 加载游戏状态
 function tryLoadGame() {
-  const saved = localStorage.getItem('game_life_save');
+  const saved = localStorage.getItem(STORAGE_KEYS.save);
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
-      if (parsed && parsed.nodes && parsed.rootId && parsed.currentNodeId) {
+      if (isValidSaveData(parsed)) {
         gameData = parsed;
         return true;
       }
     } catch (e) {
-      console.error('加载存档失败，将开启新游戏');
+      console.error('加载存档失败，尝试使用备份存档');
     }
   }
+
+  const backup = localStorage.getItem(STORAGE_KEYS.saveBackup);
+  if (backup) {
+    try {
+      const parsedBackup = JSON.parse(backup);
+      if (isValidSaveData(parsedBackup)) {
+        gameData = parsedBackup;
+        localStorage.setItem(STORAGE_KEYS.save, backup);
+        return true;
+      }
+    } catch (e) {
+      console.error('备份存档也无法读取，将保留原始数据并进入离线预览');
+    }
+  }
+
   return false;
+}
+
+function isValidSaveData(data) {
+  return !!(
+    data
+    && data.nodes
+    && typeof data.nodes === 'object'
+    && data.rootId
+    && data.currentNodeId
+    && data.nodes[data.rootId]
+    && data.nodes[data.currentNodeId]
+    && data.playerStats
+    && data.npcs
+  );
 }
 
 // 开启全新一局游戏
 function initNewGame() {
+  preserveCurrentSaveAsBackup();
   gameData.nodes = {};
   gameData.nodes[INITIAL_STORY_NODE.id] = JSON.parse(JSON.stringify(INITIAL_STORY_NODE));
   gameData.rootId = INITIAL_STORY_NODE.id;
@@ -499,7 +548,16 @@ function renderOptionsForCurrentNode() {
 
 async function handlePlayerChoice(choiceText) {
   // 1. 锁死交互，防连击
-  DOM.optionsList.innerHTML = `<button class="option-btn locked" disabled><span class="loading-text">正在掀起蝴蝶风暴，AI 正在推演时空分叉</span></button>`;
+  DOM.optionsList.innerHTML = `
+    <div class="ai-loading-card" role="status" aria-live="polite">
+      <div class="ai-loading-orb" aria-hidden="true">⏳</div>
+      <div class="ai-loading-copy">
+        <strong>AI 正在推演新的时空分叉</strong>
+        <span class="ai-loading-text">正在读取当前记忆、角色关系与蝴蝶效应</span>
+        <div class="ai-loading-bar" aria-hidden="true"><span></span></div>
+        <small>通常需要 20-90 秒，请保持页面开启。</small>
+      </div>
+    </div>`;
   DOM.inputCustomAction.disabled = true;
   DOM.btnSubmitAction.disabled = true;
 
@@ -807,7 +865,7 @@ function executeTimeTravelRewind() {
 
 // 导出整棵树为本地 JSON 文件
 function exportSaveFile() {
-  const saveDataStr = localStorage.getItem('game_life_save');
+  const saveDataStr = localStorage.getItem(STORAGE_KEYS.save);
   if (!saveDataStr) {
     alert('暂无存档数据可以导出，请先推进一段剧情。');
     return;
@@ -835,8 +893,9 @@ function handleSaveFileImport(event) {
   reader.onload = function(e) {
     try {
       const parsed = JSON.parse(e.target.result);
-      if (parsed && parsed.nodes && parsed.rootId && parsed.currentNodeId) {
+      if (isValidSaveData(parsed)) {
         // 重载内存变量
+        preserveCurrentSaveAsBackup();
         gameData = parsed;
         
         // 保存至本地存储并刷新
@@ -854,6 +913,13 @@ function handleSaveFileImport(event) {
     }
   };
   reader.readAsText(file);
+}
+
+function preserveCurrentSaveAsBackup() {
+  const currentSave = localStorage.getItem(STORAGE_KEYS.save);
+  if (currentSave) {
+    localStorage.setItem(STORAGE_KEYS.saveBackup, currentSave);
+  }
 }
 
 // ==========================================================================
