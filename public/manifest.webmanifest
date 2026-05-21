@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "时光回溯沙盒",
-  "short_name": "回溯沙盒",
+  "name": "人生模拟",
+  "short_name": "人生模拟",
   "description": "AI 驱动的平行人生模拟器，可以保存、回溯并探索不同人生分支。",
   "start_url": "/",
   "scope": "/",

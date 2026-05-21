@@ -115,5 +115,33 @@ dist/assets/index-DUpvASrX.js   30.50 kB │ gzip: 11.53 kB
 
 **代理自动生效说明**：Cloudflare Pages 平台会自动检测代码库根目录下的 `functions` 文件夹，并自动将其编译部署为 Pages Functions（基于 Cloudflare Workers 运行时）。因此，无需在 Cloudflare 平台额外配置任何反向代理，只需上述构建配置完成，线上跨域代理通道即可自动打通。
 
+---
+
+## 7. PWA 安装图标 (Logo) 自定义更新记录 (2026-05-21)
+
+根据用户最新提供的专属设计图（带有手柄与发芽大树的 GAMELIFE 主题 Logo），我们完成了 PWA 资产的覆盖和同步：
+1. **Logo 替换**：
+   - 将用户上传的高清 PNG 资产复制并强制覆盖至 `public/pwa/icon-192.png`、`public/pwa/icon-512.png` 以及 `public/pwa/maskable-512.png`。
+2. **打包验证**：
+   - 在本地执行 `npm run build`，Vite 编译无报错，所有静态资产打包顺利。
+3. **部署上线**：
+   - 执行 `git add .`、`git commit` 以及 `git push origin main` 成功将资产推送到 GitHub 远程仓库，触发 Cloudflare Pages 自动热部署。
+4. **PWA 生效验证**：
+   - 新图标会在浏览器缓存更新后加载。在支持 PWA 安装的浏览器中进行“安装应用”或“添加到主屏幕”，可直接呈现全新的自定义手柄 Logo。
+
+---
+
+## 8. PWA 应用安装名称 (Name) 更新记录 (2026-05-21)
+
+根据用户新要求，需将 PWA 安装后在设备桌面上显示的应用名称从“时光回溯沙盒”修改为“人生模拟”：
+1. **PWA 配置更新**：
+   - 修改 `public/manifest.webmanifest` 属性，将 `name` 和 `short_name` 的属性值全部更新为 `"人生模拟"`。
+2. **移动端 meta 信息更新**：
+   - 修改 `index.html`，将 `<meta name="apple-mobile-web-app-title" content="回溯沙盒" />` 更新为 `content="人生模拟"`，确保在 iOS (Safari) 环境下添加到主屏幕时名称亦为“人生模拟”。
+3. **打包及推送**：
+   - 经本地 Vite 静态构建测试验证无报错，已暂存并推送至 GitHub 库，等待 Cloudflare 部署构建更新。
+
+
+
 
 
