@@ -143,6 +143,7 @@ function saveAiConfigFromForm() {
   
   // 激活按钮
   checkApiConfiguration();
+  renderOptionsForCurrentNode();
   
   // 如果当前是初始加载状态，且已经填好了 Key，直接开始
   if (Object.keys(gameData.nodes).length === 0) {
