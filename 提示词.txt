@@ -69,3 +69,9 @@ API的key应该没有上传吧
 模型：chatgpt5.5（逻辑） + Gemini flash3.5（前端）
 部署：claudflare
 3.成本体验
+
+开发过程的部分要重写，不要写具体的代码细节。写
+1.用chatgpt image2生成logo，图片
+2.用codex +Gemini 3.5 flash 生成代码
+3.用claudflare 进行部署
+4.用Gemini 2.5 flash 模型作为底层进行驱动。
