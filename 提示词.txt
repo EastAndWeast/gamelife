@@ -59,3 +59,13 @@ API的key应该没有上传吧
 请把代码上传到github
 
 请帮我把代码提交到github
+
+我准备写公众号。记录一下我利用AI制作整个游戏的过程。
+1.简介：介绍内容
+2.制作过程
+- 工具介绍
+作图工具：chatgpt：image2
+编码工具：codex + antigravity
+模型：chatgpt5.5（逻辑） + Gemini flash3.5（前端）
+部署：claudflare
+3.成本体验
